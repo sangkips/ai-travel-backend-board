@@ -6,8 +6,8 @@ class HealthService:
     def __init__(self, repository: HealthRepository):
         self.repository = repository
 
-    def check_health(self) -> HealthResponse:
-        status = self.repository.get_status()
+    async def check_health(self) -> HealthResponse:
+        status = await self.repository.get_status()
         return HealthResponse(
             status=status,
             timestamp=datetime.utcnow(),

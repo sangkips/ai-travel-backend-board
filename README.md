@@ -14,3 +14,9 @@ A structured FastAPI application with routers, services, repositories, and schem
 ## Development
 - Run tests: `uv run pytest`
 - Format code: `uv run black .`
+
+## DB connectivity
+
+```sh
+psql 'postgresql://travel:travel@localhost:5432/travel'
+```
