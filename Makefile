@@ -16,3 +16,9 @@ up:
 down:
 	docker compose down
 
+logs:
+	docker compose logs fastapi --tail=15
+
+sync:
+	uv sync
+

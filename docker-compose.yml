@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - 5433:5432
+    volumes:
+      - travel_pgdb:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=travel
+      - POSTGRES_USER=travel
+      - POSTGRES_DB=travel
+    networks:
+      - travel_net
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://travel:travel@postgres:5432/travel
+      - VALKEY_URL=redis://valkey:6379/0
+    depends_on:
+      - postgres
+      - valkey
+    networks:
+      - travel_net
+    volumes:
+      - .:/app
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    ports:
+      - 6378:6379
+    volumes:
+      - valkey_data:/data
+    networks:
+      - travel_net
+
+volumes:
+  travel_pgdb:
+  valkey_data:
+
+networks:
+  travel_net:
