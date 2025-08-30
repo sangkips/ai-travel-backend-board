@@ -22,3 +22,6 @@ logs:
 sync:
 	uv sync
 
+build:
+	docker compose up --build -d
+
