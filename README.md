@@ -1,4 +1,4 @@
-# My FastAPI App
+# AI Travel Management App
 
 A structured FastAPI application with routers, services, repositories, and schemas.
 

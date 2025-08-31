@@ -1,6 +1,7 @@
+import redis.asyncio as redis
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-import redis.asyncio as redis
+
 
 class HealthRepository:
     def __init__(self, db: AsyncSession, valkey_client: redis.Redis):

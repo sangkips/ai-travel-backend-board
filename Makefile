@@ -51,6 +51,19 @@ migrate-down-env:
 migrate-history-env:
 	docker compose exec -e ENVIRONMENT=$(env) fastapi uv run alembic history
 
+# Code quality
+lint:
+	uv run ruff check .
+
+format:
+	uv run ruff format .
+
+format-check:
+	uv run ruff format --check .
+
+check-all:
+	uv run ruff check . && uv run ruff format --check . && uv run pyright
+
 
 dev:
 	ENVIRONMENT=staging ENV_FILE=.env.dev docker compose up -d
