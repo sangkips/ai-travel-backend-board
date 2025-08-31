@@ -13,6 +13,8 @@ RUN uv sync --frozen
 
 # Copy the application code
 COPY src ./src
+COPY entrypoint.sh ./entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 # Expose port 8000
 EXPOSE 8000

@@ -21,7 +21,7 @@ services:
       - 8000:8000
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-dev}
-      # - VALKEY_URL=redis://valkey:6379/0
+      - DOCKER_ENV=true
     depends_on:
       - postgres
       - valkey
@@ -29,7 +29,8 @@ services:
       - travel_net
     volumes:
       - .:/app
-    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    entrypoint: ["/app/entrypoint.sh"]
+    command: []
     env_file:
       - ${ENV_FILE:-.env.dev}
 
