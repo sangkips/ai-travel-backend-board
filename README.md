@@ -20,3 +20,31 @@ A structured FastAPI application with routers, services, repositories, and schem
 ```sh
 psql 'postgresql://travel:travel@localhost:5432/travel'
 ```
+
+
+## Environment-specific migrations:
+
+### For staging
+- make migrate-create-env env=staging msg="Add users table"
+- make migrate-up-env env=staging
+- make migrate-down-env env=staging
+- make migrate-history-env env=staging
+
+### For production
+- make migrate-create-env env=prod msg="Add users table"
+- make migrate-up-env env=prod
+- make migrate-down-env env=prod
+- make migrate-history-env env=prod
+
+### For development
+- make migrate-create-env env=dev msg="Add users table"
+- make migrate-up-env env=dev
+
+## Starting container with a specific environment
+
+### Start with staging environment
+- ENVIRONMENT=staging ENV_FILE=.env.staging docker-compose up -d
+
+### Then run migrations (will automatically use staging)
+- make migrate-up
+
