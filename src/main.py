@@ -1,6 +1,6 @@
 from fastapi import FastAPI
+
 from src.api.routers.health import router as health_router
-from src.database import init_db, engine
 
 app = FastAPI(
     title="AI Travel Management App",
@@ -10,11 +10,11 @@ app = FastAPI(
 
 app.include_router(health_router, prefix="/api/v1")
 
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
+# @app.on_event("startup")
+# async def startup_event():
+#     await init_db()
 
 
-@app.on_event("shutdown")
-async def shutdown_event():
-    await engine.dispose()
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     await engine.dispose()

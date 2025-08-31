@@ -1,8 +1,11 @@
-from sqlalchemy import Column, String, Boolean, DateTime
-from sqlalchemy.dialects.postgresql import UUID
-from datetime import datetime
 import uuid
+from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.dialects.postgresql import UUID
+
 from src.database import Base
+
 
 class User(Base):
     __tablename__ = "users"

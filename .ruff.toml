@@ -1,0 +1,49 @@
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "versions"
+]
+
+line-length = 88
+indent-width = 4
+
+[lint]
+select = ["E", "F", "W", "I", "N", "D", "UP", "B", "A", "C4", "PT", "SIM"]
+ignore = [
+    "D203", "D213", "D101", "D107", "D100", "D104", "D102", "D103",
+    "B008"  # Allow function calls in argument defaults (needed for FastAPI Depends)
+]
+
+[lint.pydocstyle]
+convention = "google"  # Use Google-style docstrings
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = false
+skip-magic-trailing-comma = false

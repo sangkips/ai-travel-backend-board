@@ -1,7 +1,6 @@
-import os
 import redis.asyncio as redis
-from src.settings import settings
 
+from src.settings import settings
 
 # VALKEY_URL = os.getenv('VALKEY_URL', 'redis://localhost:6379/0')
 
