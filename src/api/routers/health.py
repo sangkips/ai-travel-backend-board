@@ -6,6 +6,7 @@ from src.services.health_service import HealthService
 
 router = APIRouter()
 
+
 @router.get("/health", response_model=HealthResponse)
 async def health_check(service: HealthService = Depends(get_health_service)):
     return await service.check_health()

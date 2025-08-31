@@ -11,9 +11,10 @@ def get_env_file():
         "dev": ".env.dev",
         "staging": ".env.staging",
         "prod": ".env.prod",
-        "test": ".env.test"
+        "test": ".env.test",
     }
     return env_files.get(env, ".env.dev")
+
 
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["dev", "staging", "prod", "test"] = "dev"
@@ -33,5 +34,6 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
 
 settings = Settings()

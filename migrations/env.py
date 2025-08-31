@@ -24,6 +24,7 @@ target_metadata = Base.metadata
 # variable
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode."""
     url = config.get_main_option("sqlalchemy.url")
@@ -37,6 +38,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode with async engine."""
     connectable = create_async_engine(
@@ -49,11 +51,13 @@ async def run_async_migrations() -> None:
 
     await connectable.dispose()
 
+
 def do_run_migrations(connection) -> None:
     context.configure(connection=connection, target_metadata=target_metadata)
 
     with context.begin_transaction():
         context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()
