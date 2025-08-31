@@ -5,10 +5,11 @@ services:
       - 5433:5432
     volumes:
       - travel_pgdb:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
     environment:
-      - POSTGRES_PASSWORD=travel
-      - POSTGRES_USER=travel
-      - POSTGRES_DB=travel
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-travel}
+      - POSTGRES_USER=${POSTGRES_USER:-travel}
+      - POSTGRES_MULTIPLE_DATABASES=travel,travel_staging,travel_prod
     networks:
       - travel_net
 
@@ -19,8 +20,8 @@ services:
     ports:
       - 8000:8000
     environment:
-      - DATABASE_URL=postgresql+asyncpg://travel:travel@postgres:5432/travel
-      - VALKEY_URL=redis://valkey:6379/0
+      - ENVIRONMENT=${ENVIRONMENT:-dev}
+      - DOCKER_ENV=true
     depends_on:
       - postgres
       - valkey
@@ -28,7 +29,10 @@ services:
       - travel_net
     volumes:
       - .:/app
-    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+    entrypoint: ["/app/entrypoint.sh"]
+    command: []
+    env_file:
+      - ${ENV_FILE:-.env.dev}
 
   valkey:
     image: valkey/valkey:7.2-alpine
