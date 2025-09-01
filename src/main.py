@@ -9,12 +9,3 @@ app = FastAPI(
 )
 
 app.include_router(health_router, prefix="/api/v1")
-
-# @app.on_event("startup")
-# async def startup_event():
-#     await init_db()
-
-
-# @app.on_event("shutdown")
-# async def shutdown_event():
-#     await engine.dispose()

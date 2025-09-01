@@ -38,6 +38,18 @@ migrate-down:
 migrate-history:
 	docker compose exec fastapi uv run alembic history
 
+migrate-current:
+	docker compose exec fastapi uv run alembic current
+
+migrate-heads:
+	docker compose exec fastapi uv run alembic heads
+
+migrate-stamp:
+	docker compose exec fastapi uv run alembic stamp $(rev)
+
+migrate-reset:
+	docker compose exec fastapi uv run alembic stamp base
+
 # Environment-specific migrations
 migrate-create-env:
 	docker compose exec -e ENVIRONMENT=$(env) fastapi uv run alembic revision --autogenerate -m "$(msg)"
@@ -66,7 +78,7 @@ check-all:
 
 
 dev:
-	ENVIRONMENT=staging ENV_FILE=.env.dev docker compose up -d
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up -d
 
 staging:
 	ENVIRONMENT=staging ENV_FILE=.env.staging docker compose up -d
