@@ -35,7 +35,7 @@ indent-width = 4
 select = ["E", "F", "W", "I", "N", "D", "UP", "B", "A", "C4", "PT", "SIM"]
 ignore = [
     "D203", "D213", "D101", "D107", "D100", "D104", "D102", "D103",
-    "B008"  # Allow function calls in argument defaults (needed for FastAPI Depends)
+    "B008", "UP017"
 ]
 
 [lint.pydocstyle]

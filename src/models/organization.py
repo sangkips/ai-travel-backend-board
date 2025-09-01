@@ -1,20 +1,19 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
 
 from src.database import Base
 
 
-class User(Base):
-    __tablename__ = "users"
+class Organization(Base):
+    __tablename__ = "organizations"
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    phone = Column(String, nullable=True)
-    password_hash = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    is_verified = Column(Boolean, default=False)
+    name = Column(String, nullable=False)
+    domain = Column(String, nullable=True)
+    billing_plan = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
         DateTime,
