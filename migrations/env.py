@@ -5,9 +5,10 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import create_async_engine
 
+# Import the model registry so every model registers on Base.metadata,
+# which autogenerate compares against the live database.
+import src.models  # noqa: F401
 from src.database import Base
-
-# Import all models so Alembic can detect them
 from src.settings import settings
 
 # this is the Alembic Config object
