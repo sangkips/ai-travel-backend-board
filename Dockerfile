@@ -1,15 +1,15 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
 # Install uv
 RUN pip install uv
 
-# Copy pyproject.toml and uv.lock (if it exists)
-COPY pyproject.toml uv.lock* ./
+# Copy dependency manifest
+COPY requirements.txt ./
 
-# Install dependencies with uv
-RUN uv sync --frozen
+# Install dependencies into the system environment
+RUN uv pip install --system -r requirements.txt
 
 # Copy the application code
 COPY src ./src
