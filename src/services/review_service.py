@@ -9,12 +9,21 @@ Flow for create_review:
 
 import uuid
 
+import redis.asyncio as redis
+
+from src.events import (
+    place_security_channel,
+    publish,
+    review_added_channel,
+)
 from src.models.notifications import Notification
 from src.models.reviews import Review
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.place_repository import PlaceRepository
 from src.repositories.review_repository import ReviewRepository
+from src.schemas.places import compute_safety_label
 from src.schemas.reviews import CreateReviewInput, ReviewOut
+from src.services.place_service import PlaceService
 
 
 class ReviewService:
@@ -25,10 +34,15 @@ class ReviewService:
         review_repo: ReviewRepository,
         place_repo: PlaceRepository,
         notification_repo: NotificationRepository,
+        valkey: redis.Redis | None = None,
     ) -> None:
         self._reviews = review_repo
         self._places = place_repo
         self._notifications = notification_repo
+        # Optional: when provided, real-time events are published for the
+        # GraphQL subscriptions. REST/GraphQL both inject it (see dependencies
+        # and the GraphQL context), so events fire regardless of entry point.
+        self._valkey = valkey
 
     async def create_review(
         self,
@@ -45,6 +59,9 @@ class ReviewService:
         place = await self._places.get_by_id(data.place_id)
         if place is None:
             raise ValueError(f"Place {data.place_id} not found")
+
+        # Capture the safety label *before* this review shifts the aggregate.
+        old_label = compute_safety_label(place.average_safety_score)
 
         review = Review(
             place_id=data.place_id,
@@ -68,7 +85,41 @@ class ReviewService:
             )
             await self._notifications.create(notif)
 
-        return self._to_out(review)
+        review_out = self._to_out(review)
+        await self._publish_events(place, author_id, review_out, old_label)
+        return review_out
+
+    async def _publish_events(
+        self,
+        place,
+        author_id: uuid.UUID,
+        review_out: ReviewOut,
+        old_label,
+    ) -> None:
+        """Emit real-time events for GraphQL subscriptions (best-effort)."""
+        if self._valkey is None:
+            return
+
+        # 1. Tell the place creator's stream a new review arrived.
+        if place.created_by_id and place.created_by_id != author_id:
+            await publish(
+                self._valkey,
+                review_added_channel(place.created_by_id),
+                review_out.model_dump(mode="json"),
+            )
+
+        # 2. If this review changed the place's safety label, alert watchers.
+        updated = await self._places.get_by_id(place.id)
+        if updated is None:
+            return
+        new_label = compute_safety_label(updated.average_safety_score)
+        if new_label != old_label:
+            place_out = PlaceService(self._places)._to_place_out(updated)
+            await publish(
+                self._valkey,
+                place_security_channel(place.id),
+                place_out.model_dump(mode="json"),
+            )
 
     async def get_place_reviews(
         self,

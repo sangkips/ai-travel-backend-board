@@ -81,11 +81,15 @@ def get_place_service(db: AsyncSession = Depends(get_db)) -> PlaceService:
 # ---------------------------------------------------------------------------
 # Review
 # ---------------------------------------------------------------------------
-def get_review_service(db: AsyncSession = Depends(get_db)) -> ReviewService:
+def get_review_service(
+    db: AsyncSession = Depends(get_db),
+    valkey_client: redis.Redis = Depends(get_valkey),
+) -> ReviewService:
     return ReviewService(
         ReviewRepository(db),
         PlaceRepository(db),
         NotificationRepository(db),
+        valkey=valkey_client,
     )
 
 

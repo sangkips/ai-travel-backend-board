@@ -9,7 +9,6 @@ All resolvers delegate to the same service layer used by the REST routers.
 
 from __future__ import annotations
 
-import asyncio
 import uuid
 from collections.abc import AsyncIterator
 from datetime import datetime
@@ -18,6 +17,8 @@ import strawberry
 from strawberry.types import Info
 
 from graphql import GraphQLError
+from src.events import place_security_channel, review_added_channel, subscribe
+from src.graphql.context import user_from_context
 from src.models.enums import SafetyLabel, TourismType, UserRole
 from src.repositories.notification_repository import NotificationRepository
 from src.repositories.place_repository import PlaceRepository
@@ -27,7 +28,9 @@ from src.repositories.vote_repository import VoteRepository
 from src.schemas.auth import LoginInput as LoginSchema
 from src.schemas.auth import SignUpInput as SignUpSchema
 from src.schemas.places import CreatePlaceInput as CreatePlaceSchema
+from src.schemas.places import PlaceOut
 from src.schemas.reviews import CreateReviewInput as CreateReviewSchema
+from src.schemas.reviews import ReviewOut
 from src.schemas.reviews import VoteInput as VoteSchema
 from src.services.auth_service import AuthService
 from src.services.notification_service import NotificationService
@@ -181,6 +184,14 @@ def _require_user(info: Info) -> dict:
     ``get_graphql_context``).
     """
     user = info.context.get("current_user")
+    if user is None:
+        raise GraphQLError("Authentication required")
+    return user
+
+
+def _subscription_user(info: Info) -> dict:
+    """Authenticate a subscription via HTTP header or WS connection params."""
+    user = user_from_context(info.context)
     if user is None:
         raise GraphQLError("Authentication required")
     return user
@@ -425,6 +436,7 @@ class Mutation:
             ReviewRepository(info.context["db"]),
             PlaceRepository(info.context["db"]),
             NotificationRepository(info.context["db"]),
+            valkey=info.context["valkey"],
         )
         try:
             review = await service.create_review(
@@ -484,11 +496,18 @@ class Subscription:
         info: Info,
         place_id: strawberry.ID | None = None,
     ) -> AsyncIterator[GQLReview]:
-        """Fires when someone reviews a place you created."""
-        # Stub: never emits. Wire to Valkey pub/sub in v2.
-        while True:
-            await asyncio.sleep(3600)
-        yield  # unreachable; makes this resolver an async generator
+        """Fires when someone reviews a place you created.
+
+        Streams reviews of any place created by the authenticated user;
+        pass ``place_id`` to narrow to a single place.
+        """
+        user = _subscription_user(info)
+        channel = review_added_channel(user["user_id"])
+        async for payload in subscribe(info.context["valkey"], channel):
+            review = ReviewOut(**payload)
+            if place_id is not None and str(review.place_id) != str(place_id):
+                continue
+            yield _gql_review(review)
 
     @strawberry.subscription
     async def place_security_alert(
@@ -497,10 +516,10 @@ class Subscription:
         place_id: strawberry.ID,
     ) -> AsyncIterator[GQLPlace]:
         """Fires when a place's safety label changes."""
-        # Stub: never emits. Wire to Valkey pub/sub in v2.
-        while True:
-            await asyncio.sleep(3600)
-        yield  # unreachable; makes this resolver an async generator
+        _subscription_user(info)  # require authentication
+        channel = place_security_channel(place_id)
+        async for payload in subscribe(info.context["valkey"], channel):
+            yield _gql_place(PlaceOut(**payload))
 
 
 # ---------------------------------------------------------------------------
