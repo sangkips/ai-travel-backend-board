@@ -16,5 +16,11 @@ COPY src ./src
 COPY entrypoint.sh ./entrypoint.sh
 RUN chmod +x ./entrypoint.sh
 
+# Run as a non-root user (best practice; satisfies Trivy DS-0002).
+# uv writes its cache under $HOME, so the user needs a home directory.
+RUN useradd --create-home --uid 10001 appuser \
+    && chown -R appuser:appuser /app
+USER appuser
+
 # Expose port 8000
 EXPOSE 8000

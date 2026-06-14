@@ -28,14 +28,15 @@ exclude = [
     "versions"
 ]
 
-line-length = 88
+line-length = 120
 indent-width = 4
 
 [lint]
 select = ["E", "F", "W", "I", "N", "D", "UP", "B", "A", "C4", "PT", "SIM"]
 ignore = [
     "D203", "D213", "D101", "D107", "D100", "D104", "D102", "D103",
-    "B008"  # Allow function calls in argument defaults (needed for FastAPI Depends)
+    "B008",  # FastAPI Depends() in argument defaults is intentional
+    "B904",  # raise ... from exc not required in HTTP exception handlers
 ]
 
 [lint.pydocstyle]

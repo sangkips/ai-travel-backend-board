@@ -45,6 +45,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: Literal["dev", "staging", "prod", "test"] = "dev"
     DATABASE_URL: str
     VALKEY_URL: str
+    SECRET_KEY: str = "change-me-in-production"  # Override via env var
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

@@ -1,5 +1,6 @@
 # Runtime
 fastapi[standard]
+strawberry-graphql[fastapi]
 uvicorn
 pydantic
 pydantic-settings
@@ -7,6 +8,10 @@ sqlalchemy
 asyncpg
 redis
 alembic
+geoalchemy2
+shapely
+bcrypt
+python-jose[cryptography]
 
 # Test & tooling (used by CI)
 pytest
@@ -14,3 +19,7 @@ pytest-asyncio
 httpx
 ruff
 pyright
+
+# Security scanning (used by CI)
+bandit
+pip-audit

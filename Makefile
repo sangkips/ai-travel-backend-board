@@ -1,5 +1,5 @@
 run:
-	fastapi dev src/main.py
+	uv run fastapi dev src/main.py
 # 	uv run uvicorn src.main:app --reload --port 8001
 
 
@@ -26,6 +26,11 @@ sync:
 
 build:
 	docker compose up --build -d
+
+rebuild:
+	docker compose down -v
+	docker compose pull
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up --build -d
 
 # Alembic migrations
 migrate-create:
@@ -68,7 +73,7 @@ check-all:
 
 
 dev:
-	ENVIRONMENT=staging ENV_FILE=.env.dev docker compose up -d
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up -d
 
 staging:
 	ENVIRONMENT=staging ENV_FILE=.env.staging docker compose up -d
