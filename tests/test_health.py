@@ -14,9 +14,7 @@ from src.main import app
 @pytest.mark.asyncio
 async def test_health_endpoint():
     """Test health endpoint with mocked dependencies."""
-    with patch(
-        "src.repositories.health_repository.HealthRepository.get_status"
-    ) as mock_get_status:
+    with patch("src.repositories.health_repository.HealthRepository.get_status") as mock_get_status:
         # Mock the repository to return healthy status
         mock_get_status.return_value = "healthy"
 
@@ -32,9 +30,7 @@ async def test_health_endpoint():
 @pytest.mark.asyncio
 async def test_health_endpoint_unhealthy():
     """Test health endpoint when services are unhealthy."""
-    with patch(
-        "src.repositories.health_repository.HealthRepository.get_status"
-    ) as mock_get_status:
+    with patch("src.repositories.health_repository.HealthRepository.get_status") as mock_get_status:
         # Mock the repository to return unhealthy status
         mock_get_status.return_value = "unhealthy"
 

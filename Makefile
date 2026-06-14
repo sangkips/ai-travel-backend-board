@@ -1,11 +1,13 @@
 run:
-	uv run uvicorn src.main:app --reload --port 8001
+	uv run fastapi dev src/main.py
+# 	uv run uvicorn src.main:app --reload --port 8001
+
 
 test:
 	uv run pytest
 
 install:
-	uv pip install requirements.txt
+	uv pip install -r requirements.txt
 
 ps:
 	docker compose ps
@@ -24,6 +26,11 @@ sync:
 
 build:
 	docker compose up --build -d
+
+rebuild:
+	docker compose down -v
+	docker compose pull
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up --build -d
 
 # Alembic migrations
 migrate-create:
