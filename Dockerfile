@@ -24,3 +24,9 @@ USER appuser
 
 # Expose port 8000
 EXPOSE 8000
+
+# Container healthcheck (satisfies Trivy DS-0026). Uses Python's stdlib so we
+# don't need curl/wget in the slim image; a non-200 response or a connection
+# error raises and exits non-zero, marking the container unhealthy.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health', timeout=4)" || exit 1

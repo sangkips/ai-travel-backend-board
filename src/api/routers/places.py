@@ -5,6 +5,7 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from src.api.dependencies import get_current_user, get_place_service
+from src.models.enums import TourismType
 from src.schemas.places import CreatePlaceInput, PlaceListItem, PlaceOut
 from src.services.place_service import PlaceService
 
@@ -36,7 +37,7 @@ async def nearby_places(
     lng: float = Query(..., description="Longitude of the user's location"),
     radius_km: float = Query(10.0, description="Search radius in kilometres"),
     min_safety_score: float | None = Query(None, ge=1, le=5),
-    tourism_type: str | None = Query(None),
+    tourism_type: TourismType | None = Query(None),
     limit: int = Query(20, le=100),
     offset: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user),
@@ -51,7 +52,7 @@ async def nearby_places(
         lng=lng,
         radius_km=radius_km,
         min_safety_score=min_safety_score,
-        tourism_type=tourism_type,
+        tourism_type=tourism_type.value if tourism_type else None,
         limit=limit,
         offset=offset,
         current_user_id=current_user["user_id"],
