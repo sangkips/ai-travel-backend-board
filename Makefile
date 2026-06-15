@@ -1,11 +1,13 @@
 run:
-	uv run uvicorn src.main:app --reload --port 8001
+	uv run fastapi dev src/main.py
+# 	uv run uvicorn src.main:app --reload --port 8001
+
 
 test:
 	uv run pytest
 
 install:
-	uv pip install requirements.txt
+	uv pip install -r requirements.txt
 
 ps:
 	docker compose ps
@@ -25,6 +27,11 @@ sync:
 build:
 	docker compose up --build -d
 
+rebuild:
+	docker compose down -v
+	docker compose pull
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up --build -d
+
 # Alembic migrations
 migrate-create:
 	docker compose exec fastapi uv run alembic revision --autogenerate -m "$(msg)"
@@ -37,6 +44,18 @@ migrate-down:
 
 migrate-history:
 	docker compose exec fastapi uv run alembic history
+
+migrate-current:
+	docker compose exec fastapi uv run alembic current
+
+migrate-heads:
+	docker compose exec fastapi uv run alembic heads
+
+migrate-stamp:
+	docker compose exec fastapi uv run alembic stamp $(rev)
+
+migrate-reset:
+	docker compose exec fastapi uv run alembic stamp base
 
 # Environment-specific migrations
 migrate-create-env:
@@ -66,7 +85,7 @@ check-all:
 
 
 dev:
-	ENVIRONMENT=staging ENV_FILE=.env.dev docker compose up -d
+	ENVIRONMENT=dev ENV_FILE=.env.dev docker compose up -d
 
 staging:
 	ENVIRONMENT=staging ENV_FILE=.env.staging docker compose up -d

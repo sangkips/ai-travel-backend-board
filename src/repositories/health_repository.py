@@ -11,6 +11,8 @@ class HealthRepository:
     async def get_status(self) -> str:
         cached_status = await self.valkey_client.get("health_status")
         if cached_status:
+            if isinstance(cached_status, bytes):
+                return cached_status.decode()
             return cached_status
 
         # Check database connection
