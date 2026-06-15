@@ -1,10 +1,23 @@
 name: CI Pipeline
 
 on:
+  push:
+    branches:
+      - main
+      - develop
   pull_request:
     branches:
       - develop
     types: [opened, synchronize, reopened]
+  schedule:
+    # Weekly Monday 06:00 UTC – re-scan already-merged code for newly
+    # disclosed CVEs even when there is no PR/push activity.
+    - cron: '0 6 * * 1'
+
+# Required so Trivy results can be uploaded to the GitHub Security tab.
+permissions:
+  contents: read
+  security-events: write
 
 jobs:
   lint-typecheck-test-build:
@@ -12,28 +25,22 @@ jobs:
 
     services:
       postgres:
-        image: postgres:17-alpine
+        image: postgis/postgis:17-3.5-alpine  # PostGIS: the Place.location Geometry column needs it
         env:
           POSTGRES_USER: travel
           POSTGRES_PASSWORD: travel
           POSTGRES_DB: travel
         ports:
-          - 5432:5432
+        - 5432:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
       valkey:
         image: valkey/valkey:7.2-alpine
         ports:
-          - 6379:6379
+        - 6379:6379
         options: >-
-          --health-cmd "valkey-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          --health-cmd "valkey-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout repository
@@ -57,7 +64,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv venv
+          uv venv --clear
           uv pip install -r requirements.txt
 
       - name: Run ruff (lint and format check)
@@ -68,9 +75,44 @@ jobs:
 
       - name: Run pytest
         env:
+          ENVIRONMENT: test
+          DOCKER_ENV: "false"
           DATABASE_URL: postgresql+asyncpg://travel:travel@localhost:5432/travel
           VALKEY_URL: redis://localhost:6379/0
         run: uv run pytest
+
+      # ── Security: Python SAST + dependency audit (source-level) ──────────
+      # Bandit scans our own code for insecure patterns; pip-audit checks the
+      # declared dependencies against the PyPI advisory database.
+      - name: Run Bandit (Python SAST)
+        run: uv run bandit -r src --severity-level medium --confidence-level medium
+
+      - name: Run pip-audit (dependency vulnerabilities)
+        run: uv run pip-audit -r requirements.txt
+
+      # ── Security: scan the source BEFORE building the image ──────────────
+      # Flags vulnerable dependencies, hardcoded secrets, and Dockerfile/IaC
+      # misconfigurations. Fails the build on HIGH/CRITICAL; results are also
+      # published to the GitHub Security tab as SARIF.
+      - name: Trivy filesystem scan (deps, secrets, Dockerfile)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: false
+          exit-code: '1'
+          format: sarif
+          output: trivy-fs.sarif
+
+      - name: Upload filesystem scan to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()  # upload findings even when the scan step failed the gate
+        continue-on-error: true  # don't fail CI if code scanning isn't enabled
+        with:
+          sarif_file: trivy-fs.sarif
+          category: trivy-fs
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -89,9 +131,37 @@ jobs:
           context: .
           file: Dockerfile
           push: false
+          load: true  # load into the local daemon so Trivy can scan it
           tags: ai-travel-backend:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+
+      # ── Security: scan the built image BEFORE any registry push ──────────
+      # OS + language package vulnerabilities baked into the image layers.
+      # unfixed CVEs (no upstream patch yet) are reported but don't fail.
+      - name: Trivy image scan (vulnerabilities before push)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: ai-travel-backend:latest
+          scanners: vuln,secret
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'
+          format: sarif
+          output: trivy-image.sarif
+
+      - name: Upload image scan to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()  # upload findings even when the scan step failed the gate
+        continue-on-error: true  # don't fail CI if code scanning isn't enabled
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image
+
+      # A `docker/build-push-action` with `push: true` (gated on a registry
+      # login + this job succeeding) would go here — the scans above ensure
+      # nothing HIGH/CRITICAL reaches the registry.
 
       - name: Move Docker cache
         run: |
